@@ -90,9 +90,12 @@ class DB():
             return 0
 
     def Get_rfid(self,rfid):
-            self.cur.execute("SELECT number FROM base WHERE rfid = %s " % (rfid))
+            self.cur.execute("SELECT number FROM base WHERE rfid = '%s'" % (rfid))
             number = self.cur.fetchall()[0]['number']
             if number:
+                self.cur.execute("INSERT INTO out_info(time, number) \
+                                                VALUES ('%s', '%s', '%s')" % (self.Get_time(), number, rfid))
+                self.conn.commit()
                 return number
             else:
                 return 0

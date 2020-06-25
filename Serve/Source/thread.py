@@ -21,11 +21,10 @@ class Sever(threading.Thread):
             try:
                 data = self.conn.recv(30)
                 cmd = str(data, 'utf8').split('|')
-                if cmd[0] == 'android':
-                    self.Android()
-
+                # if cmd[0] == 'android':
+                #     self.Android()
                 # 上传stm32的测量和身份信息
-                elif cmd[0] == 'stm32':
+                if cmd[0] == 'stm32':
                     self.Send("Welcome stm32!")
                     self.Stm32()
                     break
@@ -49,6 +48,8 @@ class Sever(threading.Thread):
             print("异常退出线程")
         else:
             print('正常关闭该线程')
+        finally:
+            print("退出")
 
 
     # Android操作主函数
@@ -58,6 +59,7 @@ class Sever(threading.Thread):
             data = self.conn.recv(1024)  # 缓冲区大小，接收文件的个数               第一次获取请求
             cmd = str(data, 'utf8').split('|')  # 第一次提取请求信息，获取  post name size
             # Android登陆操作
+            print("android starting")
             if cmd[0] == 'login':
                 # name,passwd来自数据库
                 if len(cmd) == 3:
@@ -80,15 +82,13 @@ class Sever(threading.Thread):
                 filename = cmd[1] + '.' + cmd[5].split('.')[1]
                 self.Send("starting")
                 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # 26:11,当前目录
-                path = os.path.join(BASE_DIR, '../Picture', filename)
-                path = self.Get_Img(path, int(cmd[6]))  #获取并保存图片
-
-
-                cmd[5] = self.Get_Img(filename, int(cmd[6]))
+                path = os.path.join(BASE_DIR, 'Picture', filename)
+                cmd[5] = self.Get_Img(path, int(cmd[6]))
+                print("图片传输完成")
                 l = self.sql_conn.Android(list(cmd[1:6]))
                 if l == 1:
                     self.conn.send("Add".encode('utf8'))
-                    training.getImageAndLabels('../Picture')
+                    training.getImageAndLabels('Picture')
                     print('Add')
                 elif l == 2:
                     self.conn.send("Haved".encode('utf8'))
@@ -122,10 +122,9 @@ class Sever(threading.Thread):
                     if number != 0:
                         self.conn.send("ok".encode('utf8'))
                     else:
-                        self.conn.send('error'.encode('utf8'))
+                        self.Send("error")
             except:
-                self.Send("update: rfid|temp")
-                pass
+                self.Send("error")
             finally:
                 time.sleep(2)
 
@@ -141,15 +140,15 @@ class Sever(threading.Thread):
             elif cmd[0] == 'data':
                     temp = cmd[1]
                     while 1:
-                        path = self.Get_Img("../Target/target.png", int(cmd[3]))
+                        path = self.Get_Img("Target/target.png", int(cmd[3]))
                         id_number, confidence = face.predict(path)
-                        if confidence > 0.8:
+                        if confidence > 0.7:
                             self.Send('ok')
+                            state = self.sql_conn.stm32_update(number=id_number, temp=temp)
                             time.sleep(4)
                             break
                         else:
                             self.Send('error')
-                    state = self.sql_conn.stm32_update(number=id_number, temp=temp)
             time.sleep(2)
 
 
@@ -171,8 +170,6 @@ class Sever(threading.Thread):
                 self.conn.send('error'.encode('utf8'))
 
     def Get_Img(self, path, filesize):
-        # BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # 26:11,当前目录
-        # path = os.path.join(BASE_DIR, 'Picture', filename)
         size = 0
         with open(path, 'ab') as f:
             while size != filesize:
