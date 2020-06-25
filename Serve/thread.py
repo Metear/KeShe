@@ -39,6 +39,7 @@ class Sever(threading.Thread):
                 else:
                     self.Send("ERROR Please ENTER one of (android camera） or exit to disconnect!")
                 time.sleep(2)
+                
             except:
                break
         try:
