@@ -1,7 +1,5 @@
-import os
 import time
 import threading
-import training
 import face
 
 class Sever(threading.Thread):
@@ -9,6 +7,7 @@ class Sever(threading.Thread):
         threading.Thread.__init__(self)
         self.conn = conn
         self.addr = addr
+        self.times = 0
         self.sql_conn = sql_conn
         self.start()
 
@@ -21,9 +20,6 @@ class Sever(threading.Thread):
             try:
                 data = self.conn.recv(30)
                 cmd = str(data, 'utf8').split('|')
-                # if cmd[0] == 'android':
-                #     self.Android()
-                # 上传stm32的测量和身份信息
                 if cmd[0] == 'stm32':
                     self.Send("Welcome stm32!")
                     self.Stm32()
@@ -37,7 +33,7 @@ class Sever(threading.Thread):
                 elif cmd[0] == 'exit':
                     break
                 else:
-                    self.Send("ERROR Please ENTER one of (android camera） or exit to disconnect!")
+                    self.Send("ERROR Please ENTER one of (stm32 camera） or exit to disconnect!")
                 time.sleep(2)
                 
             except:
@@ -53,57 +49,6 @@ class Sever(threading.Thread):
             print("退出")
 
 
-    # Android操作主函数
-    def Android(self):
-        self.Send('Welcome Android!')
-        while True:
-            data = self.conn.recv(1024)  # 缓冲区大小，接收文件的个数               第一次获取请求
-            cmd = str(data, 'utf8').split('|')  # 第一次提取请求信息，获取  post name size
-            # Android登陆操作
-            print("android starting")
-            if cmd[0] == 'login':
-                # name,passwd来自数据库
-                if len(cmd) == 3:
-                    try:
-                        result = self.sql_conn.login(cmd[1], cmd[2])
-                        if result == 3:
-                            self.Send('User ERROR!')
-                        elif result == 0:
-                            self.Send('Password ERROR!')
-                        elif result == 1:
-                            self.Send('login sucessful!')
-                            self.Android_update()
-                    except:
-                        self.Send('ERROR Please register first!')
-                else:
-                    self.Send("login ERROR,please ENTER like this:'login|user_number|password'")
-            # 注册操作cmd = [    0         1         2         3         4        5           6
-            #               'register', 'number', 'name', 'password', 'rfid', 'filename', 'filesize']
-            elif cmd[0] == 'register':
-                filename = cmd[1] + '.' + cmd[5].split('.')[1]
-                self.Send("starting")
-                BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # 26:11,当前目录
-                path = os.path.join(BASE_DIR, 'Picture', filename)
-                cmd[5] = self.Get_Img(path, int(cmd[6]))
-                print("图片传输完成")
-                l = self.sql_conn.Android(list(cmd[1:6]))
-                if l == 1:
-                    self.conn.send("Add".encode('utf8'))
-                    training.getImageAndLabels('Picture')
-                    print('Add')
-                elif l == 2:
-                    self.conn.send("Haved".encode('utf8'))
-                    print('Haved')
-                else:
-                    print('error')
-
-
-            elif cmd[0] == 'exit':
-                break
-            else:
-                pass
-            time.sleep(2)
-
     # stm32数据上传格式
     # IP：49.95.211.155
     # 端口：40
@@ -118,12 +63,20 @@ class Sever(threading.Thread):
                 cmd = str(data, 'utf8').split('|')  # 第一次提取请求信息，获取  post name size
                 if cmd[0] == 'exit':
                     break
-                elif cmd[0]=='data':
-                    number = self.sql_conn.Get_rfid(cmd[1])
+                elif cmd[0]=='data1':
+                    number = self.sql_conn.Get_rfid(cmd[1], come_in=1)
                     if number != 0:
                         self.conn.send("ok".encode('utf8'))
                     else:
                         self.Send("error")
+                elif cmd[0]=='data2':
+                    number = self.sql_conn.Get_rfid(cmd[1], come_out=1)
+                    if number != 0:
+                        self.conn.send("ok".encode('utf8'))
+                    else:
+                        self.Send("error")
+                elif cmd[0] == 'hello':
+                    self.Send('hello')
             except:
                 self.Send("error")
             finally:
@@ -139,36 +92,27 @@ class Sever(threading.Thread):
             if cmd[0] == 'exit':
                 break
             elif cmd[0] == 'data':
-                    temp = cmd[1]
-                    while 1:
-                        path = self.Get_Img("Target/target.png", int(cmd[3]))
-                        id_number, confidence = face.predict(path)
-                        if confidence > 0.7:
-                            self.Send('ok')
-                            state = self.sql_conn.stm32_update(number=id_number, temp=temp)
-                            time.sleep(4)
-                            break
-                        else:
-                            self.Send('error')
+                state = self.sql_conn.camer_update(number=cmd[1], temp=cmd[2])
+                if state != 0:
+                    self.Send('ok')
+                    time.sleep(4)
+                else:
+                    self.Send('error')
+                    # # temp = cmd[1]
+                    # while 1:
+                    #     # path = self.Get_Img('Target/target.jpg', int(cmd[3]))
+                    #     # id_number, confidence = face.predict('Target/target.jpg')
+                    #     state = self.sql_conn.camer_update(number=cmd[1], temp=cmd[2])
+                    #     if state != 0:
+                    #         self.Send('ok')
+                    #         times = self.Get_time()
+                    #         time.sleep(4)
+                    #         break
+                    #     else:
+                    #         self.Send('error')
             time.sleep(2)
 
 
-    # 数据格式 update|number|site|state|temp  update|2017213022|chengdu|good|36.5
-    def Android_update(self):
-        while 1:
-            data = self.conn.recv(1024)  # 缓冲区大小，接收文件的个数               第一次获取请求
-            cmd = str(data, 'utf8').split('|')  # 第一次提取请求信息，获取  post name size
-            if cmd[0] == 'update':
-                cmd[0] = self.Get_time()
-                if self.sql_conn.Android_update(cmd):
-                    self.conn.send('ok'.encode('utf8'))
-                    break
-                else:
-                    self.conn.send('error'.encode('utf8'))
-            elif cmd[0] == 'exit':
-                break
-            else:
-                self.conn.send('error'.encode('utf8'))
 
     def Get_Img(self, path, filesize):
         size = 0

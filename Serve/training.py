@@ -26,22 +26,27 @@ def getImageAndLabels(path):
             facesSamples.append(img_numpy[y:y+h, x:x+w])
             ids.append(id)
         # 获取训练对象
+    # recognizer = cv.face.LBPHFaceRecognizer_create()
+    # recognizer.train(faces, np.array(ids))
+    # # 保存文件
+    # recognizer.write('confing/trainer.yml')
+    return facesSamples,ids
+
+
+def Traing():
+    path = './Picture/'
+    # 获取图像数组和id标签数组
+    faces, ids = getImageAndLabels(path)
+    # 获取训练对象
     recognizer = cv.face.LBPHFaceRecognizer_create()
     recognizer.train(faces, np.array(ids))
     # 保存文件
     recognizer.write('confing/trainer.yml')
-    #return facesSamples,ids
 
-'''
 
 if __name__ == '__main__':
     #图片路径
-    path='./data/jm/'
-    #获取图像数组和id标签数组
-    faces,ids=getImageAndLabels(path)
-    #获取训练对象
-    recognizer=cv.face.LBPHFaceRecognizer_create()
-    recognizer.train(faces,np.array(ids))
-    #保存文件
-    recognizer.write('trainer/trainer.yml')
-'''
+    #path='./data/jm/'
+    Traing()
+    print("Traing Over!")
+

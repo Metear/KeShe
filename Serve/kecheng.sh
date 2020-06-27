@@ -1,5 +1,5 @@
 #!/bin/bash
-filepath="/root/Serve/Source/Serve.py"
+filepath="/root/Serve/Serve.py"
 start(){
     nohup python3 $filepath>log.txt 2>&1 &
     echo 'kecheng service OK'

@@ -1,21 +1,21 @@
 import db
 import socket
-import task
+# import task
 import thread
 import pymysql
 from DBUtils.PooledDB import PooledDB
 
 # 172.25.51.65 40
 sk = socket.socket()
-address = ('localhost', 8800)
+address = ('172.25.51.65', 40)
 sk.bind(address)  # 将本地地址与一个socket绑定在一起
 sk.listen(30)  # 最多允许有3个客户称呼
-pool = PooledDB(pymysql, 20, host="47.95.211.155", port=3306, db="TESTDB", user='zf', passwd='zf2279', charset='utf8')
+pool = PooledDB(pymysql, 20, host="47.95.211.155", port=3306, db="whoere", user='zf', passwd='zf2279', charset='utf8')
 
 
 def main():
     try:
-        task.task()
+        # task.task()
         print('waiting........ ')
         while 1:
                 conn, addr = sk.accept()
