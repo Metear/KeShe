@@ -1,6 +1,5 @@
 import time
 import threading
-import face
 
 class Sever(threading.Thread):
     def __init__(self, conn, addr, sql_conn):
@@ -92,37 +91,11 @@ class Sever(threading.Thread):
             if cmd[0] == 'exit':
                 break
             elif cmd[0] == 'data':
-                state = self.sql_conn.camer_update(number=cmd[1], temp=cmd[2])
+                state = self.sql_conn.camer_update(cmd[1], cmd[2])
                 if state != 0:
                     self.Send('ok')
-                    time.sleep(4)
                 else:
                     self.Send('error')
-                    # # temp = cmd[1]
-                    # while 1:
-                    #     # path = self.Get_Img('Target/target.jpg', int(cmd[3]))
-                    #     # id_number, confidence = face.predict('Target/target.jpg')
-                    #     state = self.sql_conn.camer_update(number=cmd[1], temp=cmd[2])
-                    #     if state != 0:
-                    #         self.Send('ok')
-                    #         times = self.Get_time()
-                    #         time.sleep(4)
-                    #         break
-                    #     else:
-                    #         self.Send('error')
-            time.sleep(2)
-
-
-
-    def Get_Img(self, path, filesize):
-        size = 0
-        with open(path, 'ab') as f:
-            while size != filesize:
-                data = self.conn.recv(1024)
-                f.write(data)
-                size += len(data)
-        self.Send('保存图片成功')
-        return path
 
     def Get_time(self):
         return str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))

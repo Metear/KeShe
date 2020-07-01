@@ -1,6 +1,5 @@
 import db
 import socket
-# import task
 import thread
 import pymysql
 from DBUtils.PooledDB import PooledDB
@@ -15,7 +14,6 @@ pool = PooledDB(pymysql, 20, host="47.95.211.155", port=3306, db="whoere", user=
 
 def main():
     try:
-        # task.task()
         print('waiting........ ')
         while 1:
                 conn, addr = sk.accept()
@@ -25,12 +23,7 @@ def main():
         print("启动线程错误!!!")
 
 if __name__ == "__main__":
-    try:
         main()
-    except:
-        print("Start ERROR!")
-
-
 
 
 

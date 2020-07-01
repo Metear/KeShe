@@ -31,42 +31,33 @@ class DB():
             number = self.cur.fetchall()[0]['account']
             if come_out ==1:
                 if number:
-                    self.cur.execute("INSERT INTO Out_Info(time, student_id,out_in) \
-                                                    VALUES ('%s', '%s', '%s')" % (self.Get_time(), number, 'come_out'))
+                    self.cur.execute("INSERT INTO Out_Info(time, student_id,out_in) VALUES ('%s', '%s', '%s')" % (self.Get_time(), number, 'come_out'))
                     self.conn.commit()
                     return number
                 else:
                     return 0
             elif come_in == 1:
                 if number:
-                    self.cur.execute("INSERT INTO Out_Info(time, student_id,out_in) \
-                                                    VALUES ('%s', '%s', '%s')" % (self.Get_time(), number, 'come_in'))
+                    self.cur.execute("INSERT INTO Out_Info(time, student_id,out_in) VALUES ('%s', '%s', '%s')" % (self.Get_time(), number, 'come_in'))
                     self.conn.commit()
                     return number
                 else:
                     return 0
 
-    def camer_update(self, rfid, temp, number=0):
+    def camer_update(self, student_number, temp):
         # 执行SQL语句
-        results = number
-        # if number:
-        #     results = number
-        # else:
-        #     results = self.Get_rfid(rfid)
-        #     if results:
-        #         return 3
-        # self.Change_clock(number)
         try:
+            # self.cur.execute("INSERT INTO health(time, student_id, temp, health_status) VALUES ('%s', '%s', '%s', '%s')" % (self.Get_time(), student_number, temp, 'yes'))
+            # self.cur.execute("INSERT INTO fc(time, student_id, temp, health_status) VALUES ('%s', '%s', '%s', '%s')" % (self.Get_time(), student_number, temp, 'yes'))
+            # self.conn.commit()
+            # return 1
             if temp < '37.3':
-                self.cur.execute("INSERT INTO health(time, student_id, Is_health) \
-                                 VALUES ('%s', '%s', '%s')" % (self.Get_time(), results, 'yes'))
+                self.cur.execute("INSERT INTO fc(time, student_id, temp, health_status) VALUES ('%s', '%s', '%s', '%s')" % (self.Get_time(), student_number, temp, 'yes'))
                 self.conn.commit()
                 return 1
             else:
-                self.cur.execute("INSERT INTO abnormal(time, student_id, Is_health) \
-                                 VALUES ('%s', '%s', '%s')" % (self.Get_time(), results, 'no'))
+                self.cur.execute("INSERT INTO fc(time, student_id, temp, health_status) VALUES ('%s', '%s', '%s', '%s')" % (self.Get_time(), student_number, temp, 'no'))
                 self.conn.commit()
-                # self.Change_fitness('0', results)
                 return 2
         except:
             print('插入数据失败')
